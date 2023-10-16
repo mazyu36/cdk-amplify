@@ -10,19 +10,18 @@ ogImage:
   url: '/assets/blog/nextjs-amplify/cover.png'
 ---
 
-# 概要
-Markdownで記事が作成できるNext.jsのブログアプリを、Amplifyでホスティングする。
 
-またAmplifyはCDKで構築する。
+## 概要
+Markdownで記事が作成できるNext.jsのブログアプリを、Amplifyでホスティングする。AmplifyはCDKで構築する。
 
 ブログアプリとしては[vercelのスターターキット](https://vercel.com/templates/next.js/blog-starter-kit)を使用。
 
 AmplifyのCDKの実装は[AWS公式の動画](https://www.youtube.com/watch?v=YL2feD9ws9k)を参考にした。
 
-# リポジトリ構成
+## リポジトリ構成
 以下のようにアプリとインフラ（CDK）をセットにしたモノレポにする。
 
-```
+```bash
 .
 ├── README.md
 ├── blog # Next.jsのサンプルアプリ
@@ -31,11 +30,11 @@ AmplifyのCDKの実装は[AWS公式の動画](https://www.youtube.com/watch?v=YL
 
 以下実装例。
 
-[https://github.com/mazyu36/cdk-amplify:embed:cite]
+https://github.com/mazyu36/cdk-amplify
 
 以降、上記の実装例を作成するためにやったことを記載する。
 
-# 事前準備：Next.jsアプリ（ブログ）の準備
+## 事前準備：Next.jsアプリ（ブログ）の準備
 yarnでブログスターターキットを取得し、アプリを作成する。
 
 ```bash
@@ -53,18 +52,15 @@ yarn dev
 
 起動したらローカルホストで3000にアクセスする。ブログが表示されればOK。
 
-[http://localhost:3000/]
+http://localhost:3000/
 
 
 
 
-# CDK（Amplify）の実装
+## CDK（Amplify）の実装
 
-## 事前準備
-今回はAmplifyのalphaモジュールを使用する。
-
-
-[https://docs.aws.amazon.com/cdk/api/v2/docs/aws-amplify-alpha-readme.html:embed:cite]
+### 事前準備
+今回はAmplifyの[alphaモジュール](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-amplify-alpha-readme.html)を使用する。
 
 以下のようにalphaモジュールを追加する。
 
@@ -76,7 +72,7 @@ cdk init app --language typescript
 npm i @aws-cdk/aws-amplify-alpha
 ```
 
-## プロジェクト構成
+### プロジェクト構成
 
 ```bash
 .
@@ -97,7 +93,7 @@ npm i @aws-cdk/aws-amplify-alpha
 └── tsconfig.json
 ```
 
-## Stackの実装内容
+### Stackの実装内容
 Stack内にalphaモジュールの`App`を使用して実装していく。
 
 
@@ -151,7 +147,7 @@ const amplifyApp = new App(this, "AmplifyAppBlog", {
     amplifyApp.addBranch("main", { stage: "PRODUCTION" })
 ```
 
-### ①GitHubをソースとして使用
+#### ①GitHubをソースとして使用
 
 ```typescript
       sourceCodeProvider: new GitHubSourceCodeProvider({
@@ -165,7 +161,7 @@ const amplifyApp = new App(this, "AmplifyAppBlog", {
 またGitHubのトークンはSecrets Managerに事前に登録しておき、読み込む。
 
 
-### ②環境変数の設定
+#### ②環境変数の設定
 
 ```typescript
       // ②環境変数の設定
@@ -175,15 +171,13 @@ const amplifyApp = new App(this, "AmplifyAppBlog", {
         "AMPLIFY_DIFF_DEPLOY": "true" // 差分ビルドを有効化
       },
 ```
-今回重要なのは`AMPLIFY_MONOREPO_APP_ROOT`である。
-
-Next.jsのアプリが入っているのはソースコードプロジェクトのルートではなく、`blog/`配下なので環境変数でパスとして指定する
+今回重要なのは`AMPLIFY_MONOREPO_APP_ROOT`である。Next.jsのアプリが入っているのはソースコードプロジェクトのルートではなく、`blog/`配下なので環境変数でパスとして指定する
 
 また`AMPLIFY_DIFF_DEPLOY`を`true`にすることで、フロントエンドの差分ビルドが有効になる。差分がないときはビルドがスキップされる。
 
 
 
-### ③buildspecの設定
+#### ③buildspecの設定
 ```typescript
       buildSpec: codebuild.BuildSpec.fromObjectToYaml({
         version: 1,
@@ -221,7 +215,7 @@ Next.jsのアプリが入っているのはソースコードプロジェクト�
 また、今回Next.jsのアプリ作成時に`yarn`を使用しているため、コマンドを全般的に置き換えている。
 
 
-## 環境依存パラメータの定義
+### 環境依存パラメータの定義
 `parameter.ts`に環境依存パラメータを定義するようにしている。今回は[BLEAのサンプル](https://github.com/aws-samples/baseline-environment-on-aws/tree/main/usecases/blea-guest-ecs-app-sample)の実装方法を参考にしている。
 
 ```typescript
@@ -286,9 +280,9 @@ new CdkAmplifyStack(app, 'CdkAmplifyStack', {
 ```
 
 
-# デプロイの実施
+## デプロイの実施
 
-## GitHubのトークンを取得
+### GitHubのトークンを取得
 まずはGitHubをソースコードプロバイダーとして使うためのトークンの発行を行う。
 
 手順としては以下である。
@@ -299,20 +293,20 @@ https://docs.github.com/ja/authentication/keeping-your-account-and-data-secure/m
 
 
 
-## Secrets Managerにトークンを登録
+### Secrets Managerにトークンを登録
 発行したGitHubのトークンをSecrets Managerに登録する。
 
 「そのほかのシークレットタイプ」にして、トークンを登録する。
 
 
-## CDKデプロイの実施
+### CDKデプロイの実施
 `cdk deploy`でAmplifyのアプリを作成する。
 
 
-## Next.jsアプリのデプロイ
+### Next.jsアプリのデプロイ
 初回のデプロイはマネコン上からビルドを実行する必要あり。Amplify Appを開く。
 
-## 動作確認
+### 動作確認
 デプロイ完了後、払い出されたドメインにアクセスする。
 アクセスしてNext.jsのアプリが表示されれば問題なし。
 
